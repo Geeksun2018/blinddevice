@@ -1,0 +1,35 @@
+spring:
+  http:
+    encoding:
+      charset: UTF-8
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://47.107.108.67:3306/blinddevice?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: sunwang1
+  redis:
+    database: 2
+    host: 47.107.108.67
+    port: 6379
+    password:
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1s
+        min-idle: 0
+        max-idle: 8
+    timeout: 5s
+
+#设置不被拦截的uri
+my:
+  config:
+    excludeuri:
+      - /login
+      - /register
+      - /getcode
+      - /error
+      - /alterorganization
+      - /getAllMeeting
+      - /faceOpen
+server:
+  port: 8080
