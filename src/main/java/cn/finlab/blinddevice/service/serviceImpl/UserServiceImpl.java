@@ -100,4 +100,9 @@ public class UserServiceImpl implements UserService {
         userInfoMapper.alterUserInfo(userInfo);
         return true;
     }
+
+    @Override
+    public Integer getUserIdByEid(Integer eid) {
+        return userInfoMapper.getUserIdByEid(eid);
+    }
 }

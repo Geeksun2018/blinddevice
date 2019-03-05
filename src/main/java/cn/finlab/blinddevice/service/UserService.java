@@ -15,4 +15,6 @@ public interface UserService {
     public UserInfo getUserInfo(Integer id);
 
     public boolean alterUserInfo(UserInfo userInfo);
+
+    public Integer getUserIdByEid(Integer eid);
 }
