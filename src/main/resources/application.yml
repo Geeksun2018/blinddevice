@@ -28,8 +28,5 @@ my:
       - /register
       - /getcode
       - /error
-      - /alterorganization
-      - /getAllMeeting
-      - /faceOpen
 server:
   port: 8080
