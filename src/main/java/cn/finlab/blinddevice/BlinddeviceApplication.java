@@ -11,9 +11,8 @@ public class BlinddeviceApplication{
 
     public static void main(String[] args) {
         ApplicationContext app=SpringApplication.run(BlinddeviceApplication.class, args);
-        SocketServer server = new SocketServer();
         SpringUtil.setApplicationContext(app);
-
+        SocketServer server = new SocketServer();
     }
 
 }

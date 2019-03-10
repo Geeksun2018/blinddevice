@@ -2,9 +2,10 @@ package cn.finlab.blinddevice.socket;
 
 import cn.finlab.blinddevice.model.*;
 import cn.finlab.blinddevice.service.MapService;
+import cn.finlab.blinddevice.service.serviceImpl.MapServiceImpl;
+import cn.finlab.blinddevice.utils.SpringUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -22,15 +23,13 @@ public class SocketServer
     public static Map<String, Socket> socketMap;
     public static Map<String,WalkRoute> stepsMap;
 
-    @Autowired
-    private MapService mapService;
-
     public SocketServer()
     {
         Socket client = null;
         try
         {
             socketMap = new HashMap<>();
+            stepsMap = new HashMap<>();
             serverSocket = new ServerSocket(8888);
             System.out.println("你的ip为" + serverSocket.getInetAddress().getHostAddress());
             executorService = Executors.newCachedThreadPool();
@@ -74,6 +73,7 @@ public class SocketServer
             String resultData = null;
             List<Steps> steps = null;
             Message message = null;
+            MapService mapService = SpringUtil.getBean(MapServiceImpl.class);
             try
             {
                 client = socketMap.get(ip);
@@ -87,20 +87,22 @@ public class SocketServer
                         byte[] data = new byte[ins.available()];
                         ins.read(data);
                         resultData = new String(data);
-                        resultData = resultData.replace('\'','\"');
-                        resultData = resultData.replaceAll("None","null");
+                        System.out.println(resultData);
+//                        resultData = resultData.replace('\'','\"');
+//                        resultData = resultData.replaceAll("None","null");
                         try {
                             message = JSON.parseObject(resultData, Message.class);
                         }catch (JSONException e){
                             e.printStackTrace();
-                            ous.write("json格式错误！".getBytes());
+                            ous.write("json格式错误！\r".getBytes());
                         }
                         //如果当前为导航模式
                         if(message.getNavigation().equals(0)){
+                            System.out.println(message);
                             WalkRoute walkRoute = mapService.getWalkRoute(message.getLat(),message.getLng());
                             steps = walkRoute.getResult().getRoutes().get(0).getSteps();
-                            stepsMap.put(serverSocket.getInetAddress().getHostAddress(),walkRoute);
-                            ous.write(("一共要经过" + steps.size()+ "条路").getBytes());
+                            stepsMap.put(ip,walkRoute);
+                            ous.write(("there are" + steps.size()+ " steps " + "\r").getBytes());
                         }
                         else {
                             steps = stepsMap.get(ip).getResult().getRoutes().get(0).getSteps();
