@@ -95,6 +95,7 @@ public class SocketServer
                             e.printStackTrace();
                             ous.write("json格式错误！".getBytes());
                         }
+                        //如果当前为导航模式
                         if(message.getNavigation().equals(0)){
                             WalkRoute walkRoute = mapService.getWalkRoute(message.getLat(),message.getLng());
                             steps = walkRoute.getResult().getRoutes().get(0).getSteps();

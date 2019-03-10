@@ -8,11 +8,17 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Message {
+    //精度Lng 导航的时候传入目标纬度,经度
     private String lng;
+    //纬度lat,导航的时候传入起始纬度,经度
     private String lat;
+    //行走的方向
     private String direction;
+    //是否为导航模式
     private Integer navigation;
+    //导航模式下，当前走到了，第几个阶段
     private Integer step;
+    //是否为路口
     private Integer isIntersection;
 
     @Override
