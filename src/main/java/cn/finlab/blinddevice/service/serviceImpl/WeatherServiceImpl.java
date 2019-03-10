@@ -126,13 +126,4 @@ public class WeatherServiceImpl implements WeatherService {
 
     }
 
-
-    @Override
-    public Weather getAllWeather(String longitude, String latitude) throws GetWeatherException {
-        longitude = locationParamHandle(longitude);
-        latitude = locationParamHandle(latitude);
-        String adcode = getAdcode(longitude, latitude);
-        return null;
-
-    }
 }

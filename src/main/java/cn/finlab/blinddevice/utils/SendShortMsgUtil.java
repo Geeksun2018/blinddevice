@@ -52,7 +52,7 @@ public class SendShortMsgUtil {
      * 发送注册短信
      * @param phone 手机号
      * @param code 验证码
-     * @param timeMax 有效时间
+     * @param timeMax 有效时间 以秒为单位
      * @return
      */
     public static boolean sendRegisterMsg(String phone, String code,int timeMax) {
@@ -63,7 +63,7 @@ public class SendShortMsgUtil {
      * 重置密码短信
      * @param phone 手机号
      * @param code 验证码
-     * @param timeMax 有效时间
+     * @param timeMax 有效时间 以秒为单位
      * @return
      */
     public static boolean sendResetPsdMsg(String phone,String code,int timeMax){
@@ -92,6 +92,13 @@ public class SendShortMsgUtil {
         }
     }
 
+    /**
+     * 发送重置手机号短信
+     * @param phone
+     * @param code
+     * @param timeMax 以秒为单位
+     * @return
+     */
     public static boolean sendResetPhoneMsg(String phone,String code,int timeMax){
 
         return sendMsg(phone,code,timeMax,RESET_PHONE_TEMPLATE_ID);
