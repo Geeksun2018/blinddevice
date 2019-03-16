@@ -5,8 +5,11 @@ import cn.finlab.blinddevice.model.User;
 import cn.finlab.blinddevice.model.UserInfo;
 import cn.finlab.blinddevice.service.RedisService;
 import cn.finlab.blinddevice.service.UserService;
+import cn.finlab.blinddevice.utils.GenerateVerificationCode;
 import cn.finlab.blinddevice.utils.JwtUtils;
+import cn.finlab.blinddevice.utils.SendShortMsgUtil;
 import cn.finlab.blinddevice.utils.ValidatedUtil;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -68,12 +71,16 @@ public class UserController {
     }
 
     @RequestMapping("/register")
-    public RetJson userRegister(@Valid User user) {
-        if (userService.findUserByUserName(user.getUsername()) == null) {
-            userService.register(user);
-            return RetJson.succcess(null);
+    public RetJson userRegister(@Valid User user, String code) {
+        if (redisService.exists(user.getUsername()) && redisService.get(user.getUsername()).equals(code)) {
+            if (true) {
+                if (userService.findUserByUserName(user.getUsername()) == null) {
+                    return RetJson.succcess(null);
+                }
+                return RetJson.fail(-1, "用户已存在！");
+            }
         }
-        return RetJson.fail(-1, "用户已存在！");
+        return RetJson.fail(-1, "验证码不正确！");
     }
 
     /**
@@ -134,6 +141,19 @@ public class UserController {
     @RequestMapping("/getEmailCode")
     public RetJson getEmailCode(@Validated @Email String email){
 //        emailService.sentVerificationCode(email);
+        return RetJson.succcess(null);
+    }
+
+    @RequestMapping("/getCode")
+    public RetJson getCode(@Validated @Length(max = 11,min = 11, message = "手机号的长度必须是11位.") String phoneNum){
+//        if (userService.findUserByUserName(phoneNum)!=null){
+//            return RetJson.fail(-1,"该用户已经注册");
+//        }
+        String verificationCode = GenerateVerificationCode.generateVerificationCode(4);
+        if(!SendShortMsgUtil.sendRegisterMsg(phoneNum,verificationCode,3)){
+            return RetJson.fail(-1,"发送失败！");
+        }
+        redisService.set(phoneNum,verificationCode,300);
         return RetJson.succcess(null);
     }
 
