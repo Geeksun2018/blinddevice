@@ -115,16 +115,6 @@ public class SocketServer
                             }
                         }
                     }
-//					while ((resultData = br.readLine()) != null)
-//					{
-//						if (resultData.equals("{beat}"))
-//						{
-//							ous.write("{beat}".getBytes());
-//							ous.flush();
-//						}
-//						MessageQueue.addToQueue(resultData);
-//						System.out.println("receive:" + resultData);
-//					}
                 }
             } catch (IOException e)
             {
@@ -141,6 +131,20 @@ public class SocketServer
                     e.printStackTrace();
                 }
             }
+        }
+    }
+
+    public static void sendMessage(String message,String ip){
+        Socket socket = SocketServer.socketMap.get("ip");
+        OutputStream ous = null;
+        if(socket == null){
+            return;
+        }
+        try {
+            ous = socket.getOutputStream();
+            ous.write(message.getBytes());
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
