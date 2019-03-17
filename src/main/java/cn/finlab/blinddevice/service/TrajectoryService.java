@@ -20,7 +20,7 @@ public interface TrajectoryService {
      * @param locTime 定位时的时间戳！时间戳！
      * @return
      */
-    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime) throws TrajectoryException, EquipmentIdException;
+    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime) throws EquipmentIdException;
 
     /**
      * 获取一段时间内用户的轨迹
