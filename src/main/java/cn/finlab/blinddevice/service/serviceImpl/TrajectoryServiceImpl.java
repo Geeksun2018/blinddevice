@@ -1,5 +1,6 @@
 package cn.finlab.blinddevice.service.serviceImpl;
 
+import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.exception.TrajectoryException;
 import cn.finlab.blinddevice.mapper.TrajectoryMapper;
 import cn.finlab.blinddevice.service.TrajectoryService;
@@ -57,10 +58,10 @@ public class TrajectoryServiceImpl implements TrajectoryService {
     }
 
     @Override
-    public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) throws TrajectoryException {
+    public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) throws EquipmentIdException {
 
         if(trajectoryMapper.idExist(id) != 1){
-            throw new TrajectoryException("设备id不存在");
+            throw new EquipmentIdException("设备id不存在");
         }
 
         if(!trajectoryMapper.hasTrajectoryInfo(id)){

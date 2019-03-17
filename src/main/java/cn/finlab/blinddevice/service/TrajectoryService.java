@@ -1,5 +1,6 @@
 package cn.finlab.blinddevice.service;
 
+import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.exception.TrajectoryException;
 
 import java.util.Map;
@@ -19,7 +20,7 @@ public interface TrajectoryService {
      * @param locTime 定位时的时间戳！时间戳！
      * @return
      */
-    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime) throws TrajectoryException;
+    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime) throws TrajectoryException, EquipmentIdException;
 
     /**
      * 获取一段时间内用户的轨迹
