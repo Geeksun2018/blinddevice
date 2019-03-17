@@ -20,6 +20,10 @@ spring:
         max-idle: 8
     timeout: 5s
 
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
 #设置不被拦截的uri
 my:
   config:
@@ -28,5 +32,7 @@ my:
       - /register
       - /getCode
       - /error
+      - /getRoute
+      - /getPosition
 server:
   port: 8080

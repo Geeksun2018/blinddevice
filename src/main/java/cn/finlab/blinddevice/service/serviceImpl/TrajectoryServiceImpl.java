@@ -2,16 +2,25 @@ package cn.finlab.blinddevice.service.serviceImpl;
 
 import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.exception.TrajectoryException;
+import cn.finlab.blinddevice.mapper.RouteRecordMapper;
 import cn.finlab.blinddevice.mapper.TrajectoryMapper;
+import cn.finlab.blinddevice.model.RouteRecord;
 import cn.finlab.blinddevice.service.TrajectoryService;
 import com.alibaba.fastjson.JSONObject;
+import com.github.pagehelper.Page;
+import com.github.pagehelper.PageHelper;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,6 +33,9 @@ public class TrajectoryServiceImpl implements TrajectoryService {
 
     @Autowired
     TrajectoryMapper trajectoryMapper;
+
+    @Autowired
+    RouteRecordMapper recordMapper;
 
     private static Logger logger = LoggerFactory.getLogger(TrajectoryServiceImpl.class);
 
@@ -57,6 +69,7 @@ public class TrajectoryServiceImpl implements TrajectoryService {
 
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) throws EquipmentIdException {
 
@@ -103,8 +116,13 @@ public class TrajectoryServiceImpl implements TrajectoryService {
 
     @Override
     public Map<String, Object> getUserTrajectory(Integer id, String startTime, String endTime) throws TrajectoryException {
-
         Map<String, Object> map = new HashMap<>(16);
+
+        if(!trajectoryMapper.hasTrajectoryInfo(id)){
+            map.put("code","1");
+            map.put("msg","未添加过轨迹");
+            return map;
+        }
 
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder reqBuild = new Request.Builder();
@@ -128,13 +146,13 @@ public class TrajectoryServiceImpl implements TrajectoryService {
                 throw new TrajectoryException("轨迹获取失败");
             } else {
                 String startPoint = jsonObject.getString("start_point");
+
                 String endPonint = jsonObject.getString("end_point");
                 String points = jsonObject.getString("points");
 
                 map.put("start_point", startPoint);
                 map.put("end_point", endPonint);
                 map.put("points", points);
-
 
                 return map;
             }
@@ -147,7 +165,24 @@ public class TrajectoryServiceImpl implements TrajectoryService {
     }
 
 
-    public Map<String, Object> getEntity(Integer id) {
+    @Override
+    public Map<String, Object> getUserNavigationRecord(Integer id, @RequestParam(defaultValue = "1") Integer pageNo,
+                                                       @RequestParam(defaultValue = "3") Integer pageSize) throws ParseException {
+        //逆序排序
+        String orderBy = "id desc";
+        Map<String,Object> map = new HashMap<>(16);
+        PageHelper.startPage(pageNo,pageSize,orderBy);
+        Page<RouteRecord> records = recordMapper.getRouteRecord(id);
+        for (RouteRecord record : records) {
+            record.setStartTime(dateToStamp(record.getStartTime()));
+            record.setEndTime(dateToStamp(record.getEndTime()));
+        }
+        map.put("routeRecord",records);
+        return map;
+    }
+
+
+    private Map<String, Object> getEntity(Integer id) {
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder reqBuild = new Request.Builder();
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://yingyan.baidu.com/api/v3/entity/list").newBuilder();
@@ -169,5 +204,18 @@ public class TrajectoryServiceImpl implements TrajectoryService {
         return null;
     }
 
+    /**
+     * date转时间戳
+     * @param s
+     * @return
+     */
+    private static String dateToStamp(String s) throws ParseException {
+        String res;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = sdf.parse(s);
+        long ts = date.getTime();
+        res = String.valueOf(ts/1000);
+        return res;
+    }
 
 }
