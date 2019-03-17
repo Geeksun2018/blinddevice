@@ -1,8 +1,9 @@
 package cn.finlab.blinddevice.socket;
 
+import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.model.*;
-import cn.finlab.blinddevice.service.MapService;
-import cn.finlab.blinddevice.service.serviceImpl.MapServiceImpl;
+import cn.finlab.blinddevice.service.*;
+import cn.finlab.blinddevice.service.serviceImpl.*;
 import cn.finlab.blinddevice.utils.SpringUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
@@ -10,6 +11,7 @@ import com.alibaba.fastjson.JSONException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ public class SocketServer
     private ServerSocket serverSocket;
     public static Map<String, Socket> socketMap;
     public static Map<String,WalkRoute> stepsMap;
+    public static Map<String,String> locationMap;
 
     public SocketServer()
     {
@@ -30,6 +33,7 @@ public class SocketServer
         {
             socketMap = new HashMap<>();
             stepsMap = new HashMap<>();
+            locationMap = new HashMap<>();
             serverSocket = new ServerSocket(8888);
             System.out.println("你的ip为" + serverSocket.getInetAddress().getHostAddress());
             executorService = Executors.newCachedThreadPool();
@@ -74,12 +78,19 @@ public class SocketServer
             List<Steps> steps = null;
             Message message = null;
             MapService mapService = SpringUtil.getBean(MapServiceImpl.class);
+            TrajectoryService trajectoryService = SpringUtil.getBean(TrajectoryServiceImpl.class);
+            EquipmentService equipmentService = SpringUtil.getBean(EquipmentServiceImpl.class);
+            UserService userService = SpringUtil.getBean(UserServiceImpl.class);
+            UserRootService userRootService = SpringUtil.getBean(UserRouteServiceImpl.class);
             try
             {
                 client = socketMap.get(ip);
                 ins = client.getInputStream();
                 ous = client.getOutputStream();
                 br = new BufferedReader(new InputStreamReader(ins));
+                Integer uid = null;
+                Integer eid = null;
+                Date now = null;
                 while (true)
                 {
                     while(ins.available() > 0)
@@ -96,20 +107,40 @@ public class SocketServer
                             e.printStackTrace();
                             ous.write("json格式错误！\r".getBytes());
                         }
+                        //根据mac地址，得到用户的id
+                        eid = equipmentService.getEidByMacAddress(message.getMacAddress());
+                        uid = userService.getUserIdByEid(eid);
+                        if(uid == null){
+                            ous.write("用户尚未绑定！".getBytes());
+                        }
                         //如果当前为导航模式
                         if(message.getNavigation().equals(0)){
+                            now = new Date();
                             System.out.println(message);
                             WalkRoute walkRoute = mapService.getWalkRoute(message.getLat(),message.getLng());
                             steps = walkRoute.getResult().getRoutes().get(0).getSteps();
                             stepsMap.put(ip,walkRoute);
+                            locationMap.put(ip,message.getLat());
+                            //发送导航总阶段数
                             ous.write(("there are" + steps.size()+ " steps " + "\r").getBytes());
+                            //当前时间再加100分钟
+                            UserRoute userRoute = new UserRoute(uid,now,new Date(now.getTime() + 6000000),eid);
+                            userRootService.insertRoute(userRoute);
                         }
                         else {
                             steps = stepsMap.get(ip).getResult().getRoutes().get(0).getSteps();
                             String lat = message.getLat();
                             String lng = message.getLng();
                             Start_location start_location = new Start_location(lng,lat);
+                            //这个结束定位指的是当前阶段的结束点
                             End_location end_location = steps.get(message.getStep()).getEnd_location();
+                            //添加轨迹到百度鹰眼   这里应该是有一个异常的
+                            try{
+                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf(new Date().getTime()));
+                            }catch (EquipmentIdException e){
+                                ous.write("您的设备尚未注册!".getBytes());
+                            }
+                            //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段
                             if(getDistance(start_location,end_location) < 0.5||message.getIsIntersection().equals(1)){
                                 ous.write(steps.get(message.getStep()).getInstruction().getBytes());
                             }
@@ -135,7 +166,7 @@ public class SocketServer
     }
 
     public static void sendMessage(String message,String ip){
-        Socket socket = SocketServer.socketMap.get("ip");
+        Socket socket = SocketServer.socketMap.get(ip);
         OutputStream ous = null;
         if(socket == null){
             return;

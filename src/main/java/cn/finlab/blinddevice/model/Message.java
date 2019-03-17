@@ -20,6 +20,9 @@ public class Message {
     private Integer step;
     //是否为路口
     private Integer isIntersection;
+    //硬件的mac地址
+    private String macAddress;
+
 
     @Override
     public String toString() {

@@ -105,4 +105,9 @@ public class UserServiceImpl implements UserService {
     public Integer getUserIdByEid(Integer eid) {
         return userInfoMapper.getUserIdByEid(eid);
     }
+
+    @Override
+    public Integer getEidByUid(Integer uid) {
+        return userInfoMapper.getEidByUid(uid);
+    }
 }

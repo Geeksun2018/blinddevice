@@ -4,6 +4,10 @@ import cn.finlab.blinddevice.model.User;
 import cn.finlab.blinddevice.model.UserInfo;
 
 public interface UserService {
+    /**
+     *注册
+     * @param user
+     */
     public void register(User user);
 
     public User findUserByUserName(String userName);
@@ -17,4 +21,6 @@ public interface UserService {
     public boolean alterUserInfo(UserInfo userInfo);
 
     public Integer getUserIdByEid(Integer eid);
+
+    public Integer getEidByUid(Integer uid);
 }

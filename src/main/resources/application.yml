@@ -26,7 +26,7 @@ my:
     excludeuri:
       - /login
       - /register
-      - /getcode
+      - /getCode
       - /error
 server:
   port: 8080

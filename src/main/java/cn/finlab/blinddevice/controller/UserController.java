@@ -75,6 +75,7 @@ public class UserController {
         if (redisService.exists(user.getUsername()) && redisService.get(user.getUsername()).equals(code)) {
             if (true) {
                 if (userService.findUserByUserName(user.getUsername()) == null) {
+                    userService.register(user);
                     return RetJson.succcess(null);
                 }
                 return RetJson.fail(-1, "用户已存在！");
@@ -154,6 +155,11 @@ public class UserController {
             return RetJson.fail(-1,"发送失败！");
         }
         redisService.set(phoneNum,verificationCode,300);
+        return RetJson.succcess(null);
+    }
+
+    @RequestMapping("/getLocation")
+    public RetJson getUserLocation(Integer userId){
         return RetJson.succcess(null);
     }
 

@@ -21,4 +21,7 @@ public interface UserInfoMapper {
     @Select("select id from userinfo where eid=#{eid}")
     public Integer getUserIdByEid(@Param("eid") Integer eid);
 
+    @Select("select eid from userinfo where id=#{uid}")
+    public Integer getEidByUid(Integer uid);
+
 }
