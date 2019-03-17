@@ -1,11 +1,13 @@
 package cn.finlab.blinddevice.service.serviceImpl;
 
 import cn.finlab.blinddevice.exception.TrajectoryException;
+import cn.finlab.blinddevice.mapper.TrajectoryMapper;
 import cn.finlab.blinddevice.service.TrajectoryService;
 import com.alibaba.fastjson.JSONObject;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -19,13 +21,16 @@ import java.util.Map;
 @Service("trajectoryService")
 public class TrajectoryServiceImpl implements TrajectoryService {
 
+    @Autowired
+    TrajectoryMapper trajectoryMapper;
+
     private static Logger logger = LoggerFactory.getLogger(TrajectoryServiceImpl.class);
 
     private static final String AK = "9emjMyBccbpTQC0SgdoyXsarumrb2ZX0";
     private static final String SERVICE_ID = "210242";
 
-    @Override
-    public boolean addUserForTrajectory(Integer id) {
+
+    private boolean addUserForTrajectory(Integer id) {
         OkHttpClient okHttpClient = new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
                 .add("ak", AK)
@@ -37,7 +42,6 @@ public class TrajectoryServiceImpl implements TrajectoryService {
         try {
             Response response = okHttpClient.newCall(request).execute();
             String result = response.body().string();
-            System.out.println(result);
             JSONObject jsonObject = JSONObject.parseObject(result);
             String status = jsonObject.getString("status");
             if (!"0".equals(status)) {
@@ -53,7 +57,20 @@ public class TrajectoryServiceImpl implements TrajectoryService {
     }
 
     @Override
-    public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) {
+    public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) throws TrajectoryException {
+
+        if(trajectoryMapper.idExist(id) != 1){
+            throw new TrajectoryException("设备id不存在");
+        }
+
+        if(!trajectoryMapper.hasTrajectoryInfo(id)){
+            boolean b = addUserForTrajectory(id);
+            if(!b){
+                return false;
+            }
+            trajectoryMapper.setTrajectoryInfo(id);
+        }
+
         OkHttpClient okHttpClient = new OkHttpClient();
         FormBody formBody = new FormBody.Builder()
                 .add("ak", AK)
@@ -69,7 +86,6 @@ public class TrajectoryServiceImpl implements TrajectoryService {
         try {
             Response response = okHttpClient.newCall(request).execute();
             String result = response.body().string();
-            System.out.println(result);
             JSONObject jsonObject = JSONObject.parseObject(result);
             String status = jsonObject.getString("status");
             if (!"0".equals(status)) {
@@ -105,7 +121,6 @@ public class TrajectoryServiceImpl implements TrajectoryService {
         try {
             response = okHttpClient.newCall(request).execute();
             String text = response.body().string();
-            System.out.println(text);
             JSONObject jsonObject = JSONObject.parseObject(text);
             String status = jsonObject.getString("status");
             if (!"0".equals(status)) {

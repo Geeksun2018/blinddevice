@@ -10,12 +10,6 @@ import java.util.Map;
  */
 public interface TrajectoryService {
 
-    /**
-     * 在鹰眼轨迹创建硬件信息
-     * @param id 硬件id
-     * @return
-     */
-    boolean addUserForTrajectory(Integer id);
 
     /**
      * 添加轨迹点
@@ -25,7 +19,7 @@ public interface TrajectoryService {
      * @param locTime 定位时的时间戳！时间戳！
      * @return
      */
-    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime);
+    boolean addUserTrajectory(Integer id,String longitude,String latitude,String locTime) throws TrajectoryException;
 
     /**
      * 获取一段时间内用户的轨迹
