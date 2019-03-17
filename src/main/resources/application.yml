@@ -32,7 +32,6 @@ my:
       - /register
       - /getCode
       - /error
-      - /getRoute
-      - /getPosition
+
 server:
   port: 8080
