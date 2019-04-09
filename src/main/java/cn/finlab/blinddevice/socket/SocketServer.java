@@ -139,7 +139,7 @@ public class SocketServer
                             End_location end_location = steps.get(stepMap.get(ip)).getEnd_location();
                             //添加轨迹到百度鹰眼   这里应该是有一个异常的
                             try{
-                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf(new Date().getTime()/1000));
+                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((new Date().getTime())/1000));
                             }catch (EquipmentIdException e){
                                 ous.write("您的设备尚未注册!".getBytes());
                             }

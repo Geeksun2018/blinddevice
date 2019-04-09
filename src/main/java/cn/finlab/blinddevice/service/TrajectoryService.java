@@ -3,6 +3,7 @@ package cn.finlab.blinddevice.service;
 import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.exception.TrajectoryException;
 
+import java.text.ParseException;
 import java.util.Map;
 
 /**
@@ -30,5 +31,15 @@ public interface TrajectoryService {
      * @throws  TrajectoryException 获取轨迹失败
      */
     Map<String,Object> getUserTrajectory(Integer id,String startTime,String endTime) throws TrajectoryException;
+
+    /**
+     * 获取用户导航记录
+     * @param id 硬件id
+     * @param pageNo 第几页
+     * @param pageSize 每一页的数量
+     * @return
+     * @throws ParseException 返回的是时间戳，格式转换时可能抛出此异常
+     */
+    Map<String,Object> getUserNavigationRecord(Integer id,Integer pageNo,Integer pageSize) throws ParseException;
 
 }
