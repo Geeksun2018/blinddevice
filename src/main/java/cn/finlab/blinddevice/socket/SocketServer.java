@@ -22,9 +22,10 @@ public class SocketServer
 {
     private ExecutorService executorService;
     private ServerSocket serverSocket;
-    public static Map<String, Socket> socketMap;
-    public static Map<String,WalkRoute> stepsMap;
-    public static Map<String,String> locationMap;
+    private static Map<String, Socket> socketMap;
+    private static Map<String,WalkRoute> stepsMap;
+    private static Map<String,String> locationMap;
+    private static Map<String,Integer> stepMap;
 
     public SocketServer()
     {
@@ -34,6 +35,7 @@ public class SocketServer
             socketMap = new HashMap<>();
             stepsMap = new HashMap<>();
             locationMap = new HashMap<>();
+            stepMap = new HashMap<>();
             serverSocket = new ServerSocket(8888);
             System.out.println("你的ip为" + serverSocket.getInetAddress().getHostAddress());
             executorService = Executors.newCachedThreadPool();
@@ -99,8 +101,6 @@ public class SocketServer
                         ins.read(data);
                         resultData = new String(data);
                         System.out.println(resultData);
-//                        resultData = resultData.replace('\'','\"');
-//                        resultData = resultData.replaceAll("None","null");
                         try {
                             message = JSON.parseObject(resultData, Message.class);
                         }catch (JSONException e){
@@ -126,23 +126,32 @@ public class SocketServer
                             //当前时间再加100分钟
                             UserRoute userRoute = new UserRoute(uid,now,new Date(now.getTime() + 6000000),eid);
                             userRootService.insertRoute(userRoute);
+                            stepMap.put(ip,1);
+                            ous.write(steps.get(0).getInstruction().getBytes());
                         }
                         else {
                             steps = stepsMap.get(ip).getResult().getRoutes().get(0).getSteps();
-                            String lat = message.getLat();
-                            String lng = message.getLng();
+                            String[] pointBegin = message.getLat().split(",");
+                            String lng = pointBegin[1];
+                            String lat = pointBegin[0];
                             Start_location start_location = new Start_location(lng,lat);
                             //这个结束定位指的是当前阶段的结束点
-                            End_location end_location = steps.get(message.getStep()).getEnd_location();
+                            End_location end_location = steps.get(stepMap.get(ip)).getEnd_location();
                             //添加轨迹到百度鹰眼   这里应该是有一个异常的
                             try{
-                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf(new Date().getTime()));
+                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf(new Date().getTime()/1000));
                             }catch (EquipmentIdException e){
                                 ous.write("您的设备尚未注册!".getBytes());
                             }
-                            //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段
-                            if(getDistance(start_location,end_location) < 0.5||message.getIsIntersection().equals(1)){
-                                ous.write(steps.get(message.getStep()).getInstruction().getBytes());
+                            //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段(路口无法检测！！！)
+                            if(getDistance(start_location,end_location) < 0.2||message.getIsIntersection()==1){
+                                Integer step = stepMap.get(ip);
+                                if(step >= steps.size()){
+                                    ous.write("您已到达目的地！".getBytes());
+                                    return;
+                                }
+                                stepMap.put(ip,++step);
+                                ous.write(steps.get(step).getInstruction().getBytes());
                             }
                         }
                     }

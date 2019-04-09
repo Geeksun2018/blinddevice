@@ -19,6 +19,6 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public Integer getEidByMacAddress(String macAddress) {
-        return null;
+        return equipmentMapper.getEidByMacAddress(macAddress);
     }
 }
