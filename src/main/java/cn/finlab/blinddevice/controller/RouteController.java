@@ -6,6 +6,7 @@ import cn.finlab.blinddevice.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import java.util.Map;
  * @author zsw
  * @date 2019/3/17 15:53
  */
+@CrossOrigin
 @RestController
 public class RouteController {
 
