@@ -1,6 +1,7 @@
 package cn.finlab.blinddevice.controller;
 
 import cn.finlab.blinddevice.exception.TrajectoryException;
+import cn.finlab.blinddevice.model.User;
 import cn.finlab.blinddevice.service.TrajectoryService;
 import cn.finlab.blinddevice.service.UserService;
 import org.slf4j.Logger;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,16 +34,17 @@ public class RouteController {
     TrajectoryService trajectoryService;
 
     /**
-     *
-     * @param userId
      * @param pageNo 第几页
      * @param pageSize 每一页有几条
      * @return
      */
     @GetMapping("/getRoute")
-    public Map<String,Object> getRoute(@RequestParam("id") Integer userId,
+    public Map<String,Object> getRoute(HttpServletRequest request,
                                        @RequestParam("pageNo")Integer pageNo,
                                        @RequestParam("pageSize") Integer pageSize){
+
+        User user = (User) request.getAttribute("user");
+        int userId = user.getId();
         Integer eid = userService.getEidByUid(userId);
         try {
             Map<String, Object> map = trajectoryService.getUserNavigationRecord(eid, pageNo, pageSize);
@@ -59,9 +62,11 @@ public class RouteController {
     }
 
     @GetMapping("/getPosition")
-    public Map<String,Object> getPosition(@RequestParam("id")Integer userId,
+    public Map<String,Object> getPosition(HttpServletRequest request,
                                           @RequestParam("startTime")Long startTime,
                                           @RequestParam("endTime")Long endTime){
+        User user= (User) request.getAttribute("user");
+        int userId = user.getId();
         Integer eid = userService.getEidByUid(userId);
         try {
             Map<String, Object> userTrajectory = trajectoryService.getUserTrajectory(eid, String.valueOf(startTime), String.valueOf(endTime));

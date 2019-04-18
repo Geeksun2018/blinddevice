@@ -119,6 +119,12 @@ public class SocketServer
                             System.out.println(message);
                             WalkRoute walkRoute = mapService.getWalkRoute(message.getLat(),message.getLng());
                             steps = walkRoute.getResult().getRoutes().get(0).getSteps();
+                            for(int i = 0;i < steps.size();i++){
+                                Steps steps1 = steps.get(i);
+                                steps1.setInstruction(steps1.getInstruction().replace("<b>",""));
+                                steps1.setInstruction(steps1.getInstruction().replace("</b>",""));
+                                steps.set(i,steps1);
+                            }
                             stepsMap.put(ip,walkRoute);
                             locationMap.put(ip,message.getLat());
                             //发送导航总阶段数
@@ -136,7 +142,7 @@ public class SocketServer
                             End_location end_location = steps.get(message.getStep()).getEnd_location();
                             //添加轨迹到百度鹰眼   这里应该是有一个异常的
                             try{
-                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((new Date().getTime())/1000));
+                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((System.currentTimeMillis())/1000));
                             }catch (EquipmentIdException e){
                                 ous.write("您的设备尚未注册!".getBytes());
                             }
