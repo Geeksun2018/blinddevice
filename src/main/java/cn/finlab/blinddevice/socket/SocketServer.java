@@ -23,9 +23,9 @@ public class SocketServer
     private ExecutorService executorService;
     private ServerSocket serverSocket;
     private static Map<String, Socket> socketMap;
-    private static Map<String,WalkRoute> stepsMap;
-    private static Map<String,String> locationMap;
-    private static Map<String,Integer> stepMap;
+    private static Map<Integer,WalkRoute> stepsMap;
+    private static Map<Integer,String> locationMap;//存放当前位置，每次都更新
+    private static Map<Integer,Integer> stepMap;
 
     public SocketServer()
     {
@@ -103,6 +103,7 @@ public class SocketServer
                         System.out.println(resultData);
                         try {
                             message = JSON.parseObject(resultData, Message.class);
+
                         }catch (JSONException e){
                             e.printStackTrace();
                             ous.write("json格式错误！\r".getBytes());
@@ -112,47 +113,35 @@ public class SocketServer
                         uid = userService.getUserIdByEid(eid);
                         if(uid == null){
                             ous.write("用户尚未绑定！".getBytes());
+                            return;
                         }
-                        //如果当前为导航模式
-                        if(message.getNavigation().equals(0)){
-                            now = new Date();
-                            System.out.println(message);
-                            WalkRoute walkRoute = mapService.getWalkRoute(message.getLat(),message.getLng());
-                            steps = walkRoute.getResult().getRoutes().get(0).getSteps();
-                            stepsMap.put(ip,walkRoute);
-                            locationMap.put(ip,message.getLat());
-                            //发送导航总阶段数
-                            ous.write(("there are" + steps.size()+ " steps " + "\r").getBytes());
-                            //当前时间再加100分钟
-                            UserRoute userRoute = new UserRoute(uid,now,new Date(now.getTime() + 6000000),eid);
-                            userRootService.insertRoute(userRoute);
-                            stepMap.put(ip,1);
-                            ous.write(steps.get(0).getInstruction().getBytes());
+                        //直接从map中获取路径，如果监护人未设置，则会有空指针
+                        if(stepsMap.get(uid) == null){
+                            ous.write("您的监护人未设置导航路径！".getBytes());
+                            return;
                         }
-                        else {
-                            steps = stepsMap.get(ip).getResult().getRoutes().get(0).getSteps();
-                            String[] pointBegin = message.getLat().split(",");
-                            String lng = pointBegin[1];
-                            String lat = pointBegin[0];
-                            Start_location start_location = new Start_location(lng,lat);
-                            //这个结束定位指的是当前阶段的结束点
-                            End_location end_location = steps.get(stepMap.get(ip)).getEnd_location();
-                            //添加轨迹到百度鹰眼   这里应该是有一个异常的
-                            try{
-                                trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((new Date().getTime())/1000));
-                            }catch (EquipmentIdException e){
-                                ous.write("您的设备尚未注册!".getBytes());
+                        steps = stepsMap.get(uid).getResult().getRoutes().get(0).getSteps();
+                        String[] pointBegin = message.getLat().split(",");
+                        String lng = pointBegin[1];
+                        String lat = pointBegin[0];
+                        Start_location start_location = new Start_location(lng,lat);
+                        //这个结束定位指的是当前阶段的结束点
+                        End_location end_location = steps.get(stepMap.get(uid)).getEnd_location();
+                        //添加轨迹到百度鹰眼   这里应该是有一个异常的
+                        try{
+                            trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((new Date().getTime())/1000));
+                        }catch (EquipmentIdException e){
+                            ous.write("您的设备尚未注册!".getBytes());
+                        }
+                        //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段(路口无法检测！！！)
+                        if(getDistance(start_location,end_location) < 0.2||message.getIsIntersection()==1){
+                            Integer step = stepMap.get(uid);
+                            if(step >= steps.size()){
+                                ous.write("您已到达目的地！".getBytes());
+                                return;
                             }
-                            //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段(路口无法检测！！！)
-                            if(getDistance(start_location,end_location) < 0.2||message.getIsIntersection()==1){
-                                Integer step = stepMap.get(ip);
-                                if(step >= steps.size()){
-                                    ous.write("您已到达目的地！".getBytes());
-                                    return;
-                                }
-                                stepMap.put(ip,++step);
-                                ous.write(steps.get(step).getInstruction().getBytes());
-                            }
+                            stepMap.put(uid,++step);
+                            ous.write(steps.get(step).getInstruction().getBytes());
                         }
                     }
                 }
@@ -186,6 +175,14 @@ public class SocketServer
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+
+    public static Map<Integer,WalkRoute> getStepsMap(){
+        return stepsMap;
+    }
+
+    public static Map<Integer,Integer> getStepMap(){
+        return stepMap;
     }
 
     public double getDistance(Start_location start, End_location end){
