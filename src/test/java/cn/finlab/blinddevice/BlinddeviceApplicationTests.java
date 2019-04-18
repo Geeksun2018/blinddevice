@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Map;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class BlinddeviceApplicationTests {
@@ -52,7 +54,11 @@ public class BlinddeviceApplicationTests {
         System.out.println(time);
         trajectoryService.addUserTrajectory(1,"108.937720","34.341044", String.valueOf(time));
     }
-
+    @Test
+    public void test1() throws TrajectoryException {
+        Map<String, Object> userTrajectory = trajectoryService.getUserTrajectory(1, "1555588271", "1555588300");
+        System.out.println(userTrajectory.toString());
+    }
 
 
 
