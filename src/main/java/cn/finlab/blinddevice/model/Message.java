@@ -8,9 +8,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Message {
-    //精度Lng 导航的时候传入目标纬度,经度
+    //精度Lng
     private String lng;
-    //纬度lat,导航的时候传入起始纬度,经度
+    //纬度lat
     private String lat;
     //行走的方向
     private String direction;

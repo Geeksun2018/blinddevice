@@ -5,6 +5,7 @@ import cn.finlab.blinddevice.model.*;
 import cn.finlab.blinddevice.service.*;
 import cn.finlab.blinddevice.service.serviceImpl.*;
 import cn.finlab.blinddevice.utils.SpringUtil;
+import cn.finlab.blinddevice.websocket.MessageSocketServer;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 
@@ -121,20 +122,18 @@ public class SocketServer
                             return;
                         }
                         steps = stepsMap.get(uid).getResult().getRoutes().get(0).getSteps();
-                        String[] pointBegin = message.getLat().split(",");
-                        String lng = pointBegin[1];
-                        String lat = pointBegin[0];
-                        Start_location start_location = new Start_location(lng,lat);
+                        Start_location start_location = new Start_location(message.getLng(),message.getLat());
                         //这个结束定位指的是当前阶段的结束点
                         End_location end_location = steps.get(stepMap.get(uid)).getEnd_location();
                         //添加轨迹到百度鹰眼   这里应该是有一个异常的
                         try{
-                            trajectoryService.addUserTrajectory(eid,lng,lat,String.valueOf((new Date().getTime())/1000));
+                            trajectoryService.addUserTrajectory(eid,message.getLng(),message.getLat(),String.valueOf((new Date().getTime())/1000));
                         }catch (EquipmentIdException e){
                             ous.write("您的设备尚未注册!".getBytes());
                         }
                         //如果离目标点的距离小于0.5km或者人到了路口 就跳到下一个阶段(路口无法检测！！！)
                         if(getDistance(start_location,end_location) < 0.2||message.getIsIntersection()==1){
+                            MessageSocketServer.webSocketMap.get(uid).sendMessage(uid,resultData);
                             Integer step = stepMap.get(uid);
                             if(step >= steps.size()){
                                 ous.write("您已到达目的地！".getBytes());
