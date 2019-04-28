@@ -119,4 +119,12 @@ public class RouteController {
         return RetJson.succcess(null);
     }
 
+    @GetMapping("/getLocation")
+    public RetJson navigation(@RequestParam("uid")Integer uid){
+        if(SocketServer.locationMap.get(uid) == null){
+            return RetJson.succcess("location","113.017001,28.070051");
+        }
+        return RetJson.succcess("location",SocketServer.locationMap.get(uid));
+    }
+
 }

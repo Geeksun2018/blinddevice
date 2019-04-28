@@ -160,12 +160,6 @@ public class UserController {
         return RetJson.succcess(null);
     }
 
-    @RequestMapping("/getLocation")
-    public RetJson getUserLocation(Integer userId){
-        return RetJson.succcess(null);
-    }
-
-
 
     public  void copyFieldValue(UserInfo userInfo,UserInfo pastUserInfo){
         for(Field f : userInfo.getClass().getDeclaredFields()){

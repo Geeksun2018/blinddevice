@@ -9,7 +9,6 @@ import cn.finlab.blinddevice.service.TrajectoryService;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,10 +177,9 @@ public class TrajectoryServiceImpl implements TrajectoryService {
             record.setStartTime(dateToStamp(record.getStartTime()));
             record.setEndTime(dateToStamp(record.getEndTime()));
         }
-        PageInfo<RouteRecord> recordPageInfo = new PageInfo<>(records);
         long total = records.getTotal();
-        System.out.println("total" + total);
         map.put("routeRecord",records);
+        map.put("total",total);
         return map;
     }
 

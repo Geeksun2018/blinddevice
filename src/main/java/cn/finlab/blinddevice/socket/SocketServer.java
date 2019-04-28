@@ -25,7 +25,7 @@ public class SocketServer
     private ServerSocket serverSocket;
     private static Map<String, Socket> socketMap;
     private static Map<Integer,WalkRoute> stepsMap;
-    private static Map<Integer,String> locationMap;//存放当前位置，每次都更新
+    public static Map<Integer,String> locationMap;//存放当前位置，每次都更新
     private static Map<Integer,Integer> stepMap;
 
     public SocketServer()
@@ -128,6 +128,7 @@ public class SocketServer
                         //添加轨迹到百度鹰眼   这里应该是有一个异常的
                         try{
                             trajectoryService.addUserTrajectory(eid,message.getLng(),message.getLat(),String.valueOf((new Date().getTime())/1000));
+                            locationMap.put(uid,message.getLng() + "," + message.getLat());
                         }catch (EquipmentIdException e){
                             ous.write("您的设备尚未注册!".getBytes());
                         }

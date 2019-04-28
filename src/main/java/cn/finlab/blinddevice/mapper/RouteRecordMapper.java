@@ -3,6 +3,8 @@ package cn.finlab.blinddevice.mapper;
 import cn.finlab.blinddevice.model.RouteRecord;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.Results;
 import org.apache.ibatis.annotations.Select;
 
 /**
@@ -18,6 +20,10 @@ public interface RouteRecordMapper {
      * @return
      */
     @Select("select * from route where eid = #{id}")
+    @Results({
+            @Result(column = "start_time",property = "startTime"),
+            @Result(column = "end_time",property = "endTime"),
+    })
     Page<RouteRecord> getRouteRecord(Integer id);
 
 }
