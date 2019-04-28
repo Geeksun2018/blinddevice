@@ -52,6 +52,7 @@ public class UserController {
                     //将uuid和user以键值对的形式存放在redis中
                     user.setPassword(null);
                     user.setSalt(null);
+                    System.out.println(uuid.toString());
                     redisService.set("user:"+user.getId(),uuid.toString(),60*60*24*7);
 
                     Map map = new LinkedHashMap();
@@ -59,6 +60,7 @@ public class UserController {
                     map.put("id",user.getId());
                     return RetJson.succcess(map);
                 }catch (Exception e){
+                    e.printStackTrace();
                     System.out.println("token获取失败");
                 }
             }
