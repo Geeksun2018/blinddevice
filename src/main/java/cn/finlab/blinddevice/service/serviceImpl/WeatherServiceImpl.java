@@ -58,7 +58,7 @@ public class WeatherServiceImpl implements WeatherService {
 
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder reqBuild = new Request.Builder();
-        HttpUrl.Builder urlBuilder = HttpUrl.parse("https://restapi.amap.com/v3/geocode/regeo?").newBuilder();
+        HttpUrl.Builder urlBuilder = HttpUrl.parse("https://restapi.amap.com/v3/geocode/regeo").newBuilder();
         urlBuilder.addQueryParameter("key", APP_KEY);
         urlBuilder.addQueryParameter("location", location);
 
@@ -105,9 +105,10 @@ public class WeatherServiceImpl implements WeatherService {
         try {
             response = okHttpClient.newCall(request).execute();
             String text = response.body().string();
-
             JSONObject jsonObject = JSONObject.parseObject(text);
             String lives = jsonObject.getString("lives");
+            lives = lives.substring(1, lives.length() - 1);
+
             JSONObject livesObject = JSONObject.parseObject(lives);
 
             String province = livesObject.getString("province");
