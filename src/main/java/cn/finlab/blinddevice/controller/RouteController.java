@@ -57,7 +57,7 @@ public class RouteController {
     public Map<String,Object> getRoute(HttpServletRequest request,
                                        @RequestParam("pageNo")Integer pageNo,
                                        @RequestParam("pageSize") Integer pageSize){
-
+//        Integer eid = 1;
         User user = (User) request.getAttribute("user");
         int userId = user.getId();
         Integer eid = userService.getEidByUid(userId);

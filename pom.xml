@@ -55,12 +55,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <dependency>
-            <groupId>mysql</groupId>
-            <artifactId>mysql-connector-java</artifactId>
-            <scope>runtime</scope>
-        </dependency>
-
         <!--shiro 安全框架,做权限验证-->
         <dependency>
             <groupId>org.apache.shiro</groupId>
