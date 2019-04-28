@@ -1,9 +1,16 @@
 package cn.finlab.blinddevice.controller;
 
+import cn.finlab.blinddevice.common.RetJson;
 import cn.finlab.blinddevice.exception.TrajectoryException;
+import cn.finlab.blinddevice.model.Steps;
 import cn.finlab.blinddevice.model.User;
+import cn.finlab.blinddevice.model.UserRoute;
+import cn.finlab.blinddevice.model.WalkRoute;
+import cn.finlab.blinddevice.service.MapService;
 import cn.finlab.blinddevice.service.TrajectoryService;
+import cn.finlab.blinddevice.service.UserRootService;
 import cn.finlab.blinddevice.service.UserService;
+import cn.finlab.blinddevice.socket.SocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,6 +41,12 @@ public class RouteController {
 
     @Autowired
     TrajectoryService trajectoryService;
+
+    @Autowired
+    MapService mapService;
+
+    @Autowired
+    UserRootService userRootService;
 
     /**
      * @param pageNo 第几页
@@ -77,6 +92,31 @@ public class RouteController {
             logger.error(e.toString());
             return map;
         }
+    }
+
+    @GetMapping("/navigation")
+    public RetJson navigation(@RequestParam("start")String start,
+                              @RequestParam("end")String end,
+                              @RequestParam("uid")Integer uid){
+        Integer eid = userService.getEidByUid(uid);
+        List<Steps> steps = null;
+        Map<Integer, WalkRoute> stepsMap = SocketServer.getStepsMap();
+        Map<Integer,Integer> stepMap = SocketServer.getStepMap();
+        Date now = new Date();
+        WalkRoute walkRoute = mapService.getWalkRoute(start,end);
+        steps = walkRoute.getResult().getRoutes().get(0).getSteps();
+        for(int i = 0;i < steps.size();i++){
+            Steps steps1 = steps.get(i);
+            steps1.setInstruction(steps1.getInstruction().replace("<b>",""));
+            steps1.setInstruction(steps1.getInstruction().replace("</b>",""));
+            steps.set(i,steps1);
+        }
+        stepsMap.put(uid,walkRoute);
+        //当前时间再加100分钟
+        UserRoute userRoute = new UserRoute(uid,now,new Date(now.getTime() + 6000000),eid);
+        userRootService.insertRoute(userRoute);
+        stepMap.put(uid,0);
+        return RetJson.succcess(null);
     }
 
 }
