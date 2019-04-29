@@ -4,8 +4,10 @@ import cn.finlab.blinddevice.exception.EquipmentIdException;
 import cn.finlab.blinddevice.exception.TrajectoryException;
 import cn.finlab.blinddevice.mapper.RouteRecordMapper;
 import cn.finlab.blinddevice.mapper.TrajectoryMapper;
+import cn.finlab.blinddevice.model.Point;
 import cn.finlab.blinddevice.model.RouteRecord;
 import cn.finlab.blinddevice.service.TrajectoryService;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -20,9 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author zsw
@@ -73,13 +73,13 @@ public class TrajectoryServiceImpl implements TrajectoryService {
     @Override
     public boolean addUserTrajectory(Integer id, String longitude, String latitude, String locTime) throws EquipmentIdException {
 
-        if(trajectoryMapper.idExist(id) != 1){
+        if (trajectoryMapper.idExist(id) != 1) {
             throw new EquipmentIdException("设备id不存在");
         }
 
-        if(!trajectoryMapper.hasTrajectoryInfo(id)){
+        if (!trajectoryMapper.hasTrajectoryInfo(id)) {
             boolean b = addUserForTrajectory(id);
-            if(!b){
+            if (!b) {
                 return false;
             }
             trajectoryMapper.setTrajectoryInfo(id);
@@ -118,9 +118,9 @@ public class TrajectoryServiceImpl implements TrajectoryService {
     public Map<String, Object> getUserTrajectory(Integer id, String startTime, String endTime) throws TrajectoryException {
         Map<String, Object> map = new HashMap<>(16);
 
-        if(!trajectoryMapper.hasTrajectoryInfo(id)){
-            map.put("code","1");
-            map.put("msg","未添加过轨迹");
+        if (!trajectoryMapper.hasTrajectoryInfo(id)) {
+            map.put("code", "1");
+            map.put("msg", "未添加过轨迹");
             return map;
         }
 
@@ -145,15 +145,31 @@ public class TrajectoryServiceImpl implements TrajectoryService {
             if (!"0".equals(status)) {
                 throw new TrajectoryException("轨迹获取失败");
             } else {
-                String startPoint = jsonObject.getString("start_point");
+                JSONObject start_point = jsonObject.getJSONObject("start_point");
+                String latitude = start_point.getString("latitude");
+                String longitude = start_point.getString("longitude");
+                String loc_time = start_point.getString("loc_time");
+                Point startPoint = new Point(longitude, latitude, loc_time);
+                map.put("startPoint", startPoint);
 
-                String endPonint = jsonObject.getString("end_point");
-                String points = jsonObject.getString("points");
+                JSONObject end_point = jsonObject.getJSONObject("end_point");
+                latitude = end_point.getString("latitude");
+                longitude = end_point.getString("longitude");
+                loc_time = end_point.getString("loc_time");
+                Point endPoint = new Point(longitude, latitude, loc_time);
+                map.put("endPoint", endPoint);
 
-                map.put("start_point", startPoint);
-                map.put("end_point", endPonint);
-                map.put("points", points);
-
+                JSONArray jsonArray = jsonObject.getJSONArray("points");
+                List<Point> positions = new ArrayList<>();
+                for (Object o : jsonArray) {
+                    JSONObject object =(JSONObject) o;
+                    String longitude1 = object.getString("longitude");
+                    String latitude1 = object.getString("latitude");
+                    String time = object.getString("loc_time");
+                    Point point = new Point(longitude1,latitude1,time);
+                    positions.add(point);
+                }
+                map.put("points",positions);
                 return map;
             }
 
@@ -170,16 +186,16 @@ public class TrajectoryServiceImpl implements TrajectoryService {
                                                        @RequestParam(defaultValue = "3") Integer pageSize) throws ParseException {
         //逆序排序
         String orderBy = "id desc";
-        Map<String,Object> map = new HashMap<>(16);
-        PageHelper.startPage(pageNo,pageSize,orderBy);
+        Map<String, Object> map = new HashMap<>(16);
+        PageHelper.startPage(pageNo, pageSize, orderBy);
         Page<RouteRecord> records = recordMapper.getRouteRecord(id);
         for (RouteRecord record : records) {
             record.setStartTime(dateToStamp(record.getStartTime()));
             record.setEndTime(dateToStamp(record.getEndTime()));
         }
         long total = records.getTotal();
-        map.put("routeRecord",records);
-        map.put("total",total);
+        map.put("routeRecord", records);
+        map.put("total", total);
         return map;
     }
 
@@ -208,6 +224,7 @@ public class TrajectoryServiceImpl implements TrajectoryService {
 
     /**
      * date转时间戳
+     *
      * @param s
      * @return
      */
@@ -216,7 +233,7 @@ public class TrajectoryServiceImpl implements TrajectoryService {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         Date date = sdf.parse(s);
         long ts = date.getTime();
-        res = String.valueOf(ts/1000);
+        res = String.valueOf(ts / 1000);
         return res;
     }
 
