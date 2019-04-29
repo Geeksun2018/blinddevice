@@ -14,6 +14,13 @@ public interface TrajectoryService {
 
 
     /**
+     * 获取最近三次导航的轨迹
+     * @param id
+     * @return
+     */
+    Map<String,Object> getThreeRoute(Integer id) throws ParseException, TrajectoryException;
+
+    /**
      * 添加轨迹点
      * @param id 硬件id
      * @param longitude 经度

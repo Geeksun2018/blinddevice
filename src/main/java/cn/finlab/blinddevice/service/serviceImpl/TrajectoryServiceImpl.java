@@ -6,6 +6,7 @@ import cn.finlab.blinddevice.mapper.RouteRecordMapper;
 import cn.finlab.blinddevice.mapper.TrajectoryMapper;
 import cn.finlab.blinddevice.model.Point;
 import cn.finlab.blinddevice.model.RouteRecord;
+import cn.finlab.blinddevice.model.ThreeGuiJi;
 import cn.finlab.blinddevice.service.TrajectoryService;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -67,6 +68,83 @@ public class TrajectoryServiceImpl implements TrajectoryService {
             return false;
         }
 
+    }
+
+    @Override
+    public Map<String, Object> getThreeRoute(Integer id) throws ParseException, TrajectoryException {
+
+        Map<String, Object> map = new HashMap<>(16);
+
+        if (!trajectoryMapper.hasTrajectoryInfo(id)) {
+            map.put("code", "1");
+            map.put("msg", "未添加过轨迹");
+            return map;
+        }
+
+        //逆序排序
+        String orderBy = "id desc";
+
+        PageHelper.startPage(1, 3, orderBy);
+        Page<RouteRecord> records = recordMapper.getRouteRecord(id);
+        List<ThreeGuiJi> routes = new ArrayList<>();
+        for (RouteRecord record : records) {
+            record.setStartTime(dateToStamp(record.getStartTime()));
+            record.setEndTime(dateToStamp(record.getEndTime()));
+
+            OkHttpClient okHttpClient = new OkHttpClient();
+            Request.Builder reqBuild = new Request.Builder();
+            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://yingyan.baidu.com/api/v3/track/gettrack").newBuilder();
+            urlBuilder.addQueryParameter("ak", AK);
+            urlBuilder.addQueryParameter("service_id", SERVICE_ID);
+            urlBuilder.addQueryParameter("start_time", record.getStartTime());
+            urlBuilder.addQueryParameter("end_time", record.getEndTime());
+            urlBuilder.addQueryParameter("entity_name", String.valueOf(id));
+
+            reqBuild.url(urlBuilder.build());
+            Request request = reqBuild.build();
+
+            Response response = null;
+            try {
+                response = okHttpClient.newCall(request).execute();
+                String text = response.body().string();
+                System.out.println(text);
+                JSONObject jsonObject = JSONObject.parseObject(text);
+                String status = jsonObject.getString("status");
+                if (!"0".equals(status)) {
+                    throw new TrajectoryException("轨迹获取失败");
+                } else {
+                    JSONObject start_point = jsonObject.getJSONObject("start_point");
+                    String latitude = start_point.getString("latitude");
+                    String longitude = start_point.getString("longitude");
+                    String loc_time = start_point.getString("loc_time");
+                    Point startPoint = new Point(longitude, latitude, loc_time);
+
+                    JSONObject end_point = jsonObject.getJSONObject("end_point");
+                    latitude = end_point.getString("latitude");
+                    longitude = end_point.getString("longitude");
+                    loc_time = end_point.getString("loc_time");
+                    Point endPoint = new Point(longitude, latitude, loc_time);
+                    JSONArray jsonArray = jsonObject.getJSONArray("points");
+                    List<Point> positions = new ArrayList<>();
+                    for (Object o : jsonArray) {
+                        JSONObject object =(JSONObject) o;
+
+                        String longitude1 = object.getString("longitude");
+                        String latitude1 = object.getString("latitude");
+                        String time = object.getString("loc_time");
+                        Point point = new Point(longitude1,latitude1,time);
+                        positions.add(point);
+                    }
+
+                    ThreeGuiJi threeGuiJi = new ThreeGuiJi(startPoint,endPoint,positions);
+                    routes.add(threeGuiJi);
+                }
+            } catch (IOException e) {
+                throw new TrajectoryException("轨迹获取失败");
+            }
+        }
+        map.put("routes",routes);
+        return map;
     }
 
     @Transactional(rollbackFor = Exception.class)

@@ -76,6 +76,25 @@ public class RouteController {
         }
     }
 
+    @GetMapping("/getThreeRoute")
+    public Map<String,Object> getThreeRoute(HttpServletRequest request){
+        User user= (User) request.getAttribute("user");
+        int userId = user.getId();
+        Integer eid = userService.getEidByUid(userId);
+        try {
+            Map<String, Object> map = trajectoryService.getThreeRoute(eid);
+            map.put("code",0);
+            return map;
+        } catch (ParseException | TrajectoryException e) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("code","-1");
+            map.put("msg","服务器错误");
+            logger.error(e.toString());
+            return map;
+        }
+    }
+
+
     @GetMapping("/getPosition")
     public Map<String,Object> getPosition(HttpServletRequest request,
                                           @RequestParam("startTime")Long startTime,
